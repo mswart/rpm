@@ -63,11 +63,11 @@ module NewRelic
       # This method MUST return a pair. The first item always returns the
       # starting time of the trace, even if an error occurs. The second item is
       # the transaction segment if it was sucessfully pushed.
-      def start_trace( request )
+      def start_trace( request, push_scope = true )
         t0 = Time.now
 
         inject_request_headers( request ) if cross_app_enabled?
-        segment = stats_engine.push_scope( :http_request, t0 )
+        segment = stats_engine.push_scope( :http_request, t0 ) if push_scope
 
         return t0, segment
       rescue => err

@@ -61,11 +61,12 @@ module NewRelic::Agent::Instrumentation::TyphoeusTracing
   end
 
   def self.trace(request)
-    if NewRelic::Agent.is_execution_traced? && !request_is_hydra_enabled?(request)
+    if NewRelic::Agent.is_execution_traced?
       wrapped_request = ::NewRelic::Agent::HTTPClients::TyphoeusHTTPRequest.new(request)
-      t0, segment = ::NewRelic::Agent::CrossAppTracing.start_trace(wrapped_request)
+      t0, segment = ::NewRelic::Agent::CrossAppTracing.start_trace(wrapped_request, !request_is_hydra_enabled?(request))
       callback = Proc.new do
         wrapped_response = ::NewRelic::Agent::HTTPClients::TyphoeusHTTPResponse.new(request.response)
+        segment ||= ::NewRelic::Agent.instance.stats_engine.push_scope( :http_request, t0 )
         ::NewRelic::Agent::CrossAppTracing.finish_trace(t0, segment, wrapped_request, wrapped_response)
       end
       request.on_complete.unshift(callback)
